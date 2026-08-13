@@ -1,1 +1,952 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarePlus Hospital — HIS</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    aside {
+      width: 220px; flex-shrink: 0; background: #fff; border-right: 1px solid #e2e8f0;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-brand {
+      padding: 18px 20px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .brand-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 15px; flex-shrink: 0;
+    }
+    .brand-name { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .brand-sub  { font-size: 10px; color: #94a3b8; }
+
+    nav { padding: 12px 10px; flex: 1; }
+    .nav-item {
+      padding: 8px 12px; border-radius: 8px; font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; gap: 10px; color: #64748b;
+      transition: background 0.15s, color 0.15s; margin-bottom: 2px;
+    }
+    .nav-item:hover  { background: #f8fafc; color: #1e293b; }
+    .nav-item.active { background: #eff6ff; color: #3b82f6; font-weight: 500; }
+    .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+    .sidebar-footer { padding: 16px; border-top: 1px solid #e2e8f0; }
+    .user-row { display: flex; align-items: center; gap: 10px; }
+    .user-avatar {
+      width: 34px; height: 34px; border-radius: 50%; background: #eff6ff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: #3b82f6; flex-shrink: 0;
+    }
+    .user-name { font-size: 13px; font-weight: 500; color: #0f172a; }
+    .user-role { font-size: 11px; color: #94a3b8; }
+
+    /* ── Main ── */
+    main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+    .topbar {
+      background: #fff; border-bottom: 1px solid #e2e8f0;
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .page-title { font-size: 18px; font-weight: 700; color: #0f172a; }
+    .page-sub   { font-size: 13px; color: #94a3b8; margin-top: 1px; }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .search-bar {
+      padding: 8px 14px; border-radius: 8px; border: 1px solid #e2e8f0;
+      background: #f8fafc; color: #1e293b; font-size: 13px; width: 260px; outline: none;
+    }
+    .icon-action {
+      width: 36px; height: 36px; border-radius: 8px; border: 1px solid #e2e8f0;
+      background: #fff; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #64748b; font-size: 16px; transition: background 0.15s;
+    }
+    .icon-action:hover { background: #f8fafc; }
+
+    .content { padding: 28px; flex: 1; }
+
+    /* ── Stats row ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+    }
+    .stat-label  { font-size: 12px; color: #94a3b8; font-weight: 500; margin-bottom: 8px; }
+    .stat-value  { font-size: 26px; font-weight: 700; color: #0f172a; }
+    .stat-delta  { font-size: 12px; margin-top: 4px; }
+    .delta-up   { color: #22c55e; }
+    .delta-down { color: #ef4444; }
+
+    /* ── Content grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+    }
+    .card-title { font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 16px; }
+    .card-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;
+    }
+    .card-row:last-child { border-bottom: none; }
+    .card-label { color: #64748b; }
+    .card-val   { font-weight: 600; color: #0f172a; }
+
+    /* OT table */
+    .ot-row { display: grid; grid-template-columns: 80px 1fr 100px 100px; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .ot-row:last-child { border-bottom: none; }
+    .ot-room { font-weight: 600; color: #0f172a; }
+    .ot-case { color: #64748b; }
+    .ot-status { padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 600; text-align: center; }
+    .ot-active  { background: #dcfce7; color: #16a34a; }
+    .ot-waiting { background: #fef9c3; color: #ca8a04; }
+    .ot-done    { background: #f1f5f9; color: #64748b; }
+
+    .badge-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      font-size: 11px; font-weight: 700;
+    }
+    .badge-red  { background: #fee2e2; color: #ef4444; }
+    .badge-green { background: #dcfce7; color: #16a34a; }
+    .badge-blue { background: #dbeafe; color: #3b82f6; }
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .search-bar { width: 200px; }
+      .content { padding: 20px; }
+    }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; height: auto; min-height: 100vh; overflow-y: auto; }
+      aside {
+        width: 100%; flex-direction: row; align-items: center; flex-wrap: wrap;
+        border-right: none; border-bottom: 1px solid #e2e8f0;
+      }
+      .sidebar-brand { order: 1; border-bottom: none; }
+      .sidebar-footer { order: 2; margin-left: auto; border-top: none; }
+      nav { order: 3; flex: 1 1 100%; display: flex; gap: 4px; padding: 8px 12px; overflow-x: auto; }
+      .nav-item { margin-bottom: 0; white-space: nowrap; }
+      main { overflow-y: visible; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .topbar { padding: 14px 16px; }
+      .content { padding: 16px; }
+    }
+
+    @media (max-width: 560px) {
+      .stats-row { grid-template-columns: 1fr; gap: 12px; }
+      .topbar { flex-direction: column; align-items: stretch; gap: 10px; }
+      .topbar-actions { width: 100%; }
+      .search-bar { flex: 1; width: auto; }
+      .stat-card { padding: 16px; }
+      .stat-value { font-size: 22px; }
+    }
+  </style>
+
+  <style>
+    /* Widget scale + colour, inherited from the host dashboard's tokens. */
+    #hp-launcher, #hp-panel, #hp-modal { font-family: inherit; }
+
+    /* Explicit display rules override the UA [hidden] stylesheet — restore it. */
+    #hp-launcher[hidden],
+    #hp-panel[hidden],
+    #hp-modal[hidden],
+    #hp-view-idle[hidden],
+    #hp-view-status[hidden],
+    #hp-frame-error[hidden],
+    #hp-handshake[hidden] {
+      display: none !important;
+    }
+
+    #hp-launcher {
+      position: fixed; right: 24px; bottom: 24px; z-index: 40;
+      display: flex; align-items: center; gap: 9px;
+      padding: 11px 18px 11px 13px; border: none; border-radius: 999px;
+      background: linear-gradient(135deg, #6366f1, #3b82f6); color: #fff;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.32);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    #hp-launcher:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(59, 130, 246, 0.4); }
+    #hp-launcher .hp-spark { font-size: 15px; }
+
+    #hp-panel {
+      position: fixed; right: 24px; bottom: 24px; z-index: 41;
+      width: 384px; max-width: calc(100vw - 32px); max-height: calc(100vh - 48px);
+      display: flex; flex-direction: column;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+      overflow: hidden;
+    }
+
+    .hp-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 14px 14px 16px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;
+    }
+    .hp-mark {
+      width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 14px; font-weight: 700;
+    }
+    .hp-head-text { flex: 1; min-width: 0; }
+    .hp-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+    .hp-sub { font-size: 11px; color: #94a3b8; }
+
+    .hp-pill {
+      padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 600;
+      background: #f1f5f9; color: #64748b; white-space: nowrap;
+    }
+    .hp-pill[data-tone="busy"]  { background: #dbeafe; color: #2563eb; }
+    .hp-pill[data-tone="good"]  { background: #dcfce7; color: #16a34a; }
+    .hp-pill[data-tone="warn"]  { background: #fef9c3; color: #ca8a04; }
+    .hp-pill[data-tone="bad"]   { background: #fee2e2; color: #dc2626; }
+
+    .hp-icon-btn {
+      width: 28px; height: 28px; border-radius: 7px; border: 1px solid #e2e8f0;
+      background: #fff; color: #64748b; font-size: 15px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .hp-icon-btn:hover { background: #f8fafc; color: #1e293b; }
+
+    .hp-body { padding: 16px; overflow-y: auto; }
+
+    .hp-label { display: block; font-size: 12px; font-weight: 600; color: #0f172a; margin-bottom: 7px; }
+    #hp-goal {
+      width: 100%; resize: vertical; min-height: 68px;
+      padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 9px;
+      background: #f8fafc; color: #1e293b; font: inherit; font-size: 13px; line-height: 1.45;
+      outline: none;
+    }
+    #hp-goal:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14); }
+    #hp-goal:disabled { color: #94a3b8; cursor: not-allowed; }
+
+    .hp-btn {
+      width: 100%; padding: 10px 14px; border: none; border-radius: 9px;
+      background: #3b82f6; color: #fff; font: inherit; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .hp-btn:hover:not(:disabled) { background: #2563eb; }
+    .hp-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .hp-btn-ghost {
+      background: #fff; color: #475569; border: 1px solid #e2e8f0;
+    }
+    .hp-btn-ghost:hover:not(:disabled) { background: #f8fafc; color: #0f172a; }
+    .hp-btn-row { display: flex; gap: 8px; margin-top: 10px; }
+    .hp-btn-row .hp-btn { width: auto; flex: 1; }
+
+    .hp-hint { font-size: 11px; color: #94a3b8; margin-top: 9px; line-height: 1.5; }
+    .hp-hint code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; color: #475569; font-size: 10.5px; }
+
+    /* Submitted goal, shown verbatim so the prefix convention is auditable. */
+    .hp-goal-echo {
+      padding: 10px 12px; border-radius: 9px; background: #f8fafc; border: 1px solid #e2e8f0;
+      font-size: 12px; line-height: 1.5; color: #334155; word-break: break-word;
+    }
+    .hp-goal-echo .hp-prefix { color: #6366f1; font-weight: 600; }
+
+    .hp-block { margin-bottom: 14px; }
+    .hp-block:last-child { margin-bottom: 0; }
+    .hp-eyebrow {
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: #94a3b8; margin-bottom: 7px;
+    }
+
+    /* Planning: a determinate-looking bar over an indeterminate wait, plus the
+       real elapsed seconds so the user can tell it hasn't stalled. */
+    .hp-progress { height: 4px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+    .hp-progress span {
+      display: block; height: 100%; width: 35%; border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #3b82f6);
+      animation: hp-slide 1.5s ease-in-out infinite;
+    }
+    @keyframes hp-slide {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(320%); }
+    }
+    .hp-elapsed { font-size: 12px; color: #64748b; margin-top: 9px; line-height: 1.5; }
+    .hp-elapsed b { color: #0f172a; font-variant-numeric: tabular-nums; }
+
+    /* Plan summary */
+    .hp-steps { border: 1px solid #e2e8f0; border-radius: 9px; overflow: hidden; }
+    .hp-step {
+      display: flex; gap: 10px; padding: 9px 11px; border-bottom: 1px solid #f1f5f9; font-size: 12px;
+    }
+    .hp-step:last-child { border-bottom: none; }
+    .hp-step-n {
+      width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+      background: #eff6ff; color: #3b82f6; font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hp-step-label { font-weight: 600; color: #0f172a; }
+    .hp-step-role { color: #64748b; margin-top: 2px; line-height: 1.45; }
+    .hp-step-tasks { color: #94a3b8; font-size: 11px; margin-top: 2px; }
+
+    .hp-note {
+      padding: 10px 12px; border-radius: 9px; font-size: 12px; line-height: 1.5;
+    }
+    .hp-note[data-tone="bad"]  { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .hp-note[data-tone="warn"] { background: #fffbeb; color: #a16207; border: 1px solid #fde68a; }
+
+    /* Plan viewer */
+    #hp-modal {
+      position: fixed; inset: 0; z-index: 60;
+      background: rgba(15, 23, 42, 0.55);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .hp-modal-card {
+      width: 100%; height: 100%; max-width: 1400px;
+      background: #fff; border-radius: 14px; overflow: hidden;
+      display: flex; flex-direction: column;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+    }
+    .hp-modal-head {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px 12px 18px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;
+    }
+    .hp-modal-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .hp-modal-sub { font-size: 11px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+    .hp-modal-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .hp-small-btn {
+      padding: 6px 12px; border-radius: 7px; border: 1px solid #e2e8f0; background: #fff;
+      font: inherit; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer;
+    }
+    .hp-small-btn:hover { background: #f8fafc; color: #0f172a; }
+    #hp-frame-mount { flex: 1; background: #f8fafc; position: relative; }
+    #hp-frame-mount iframe { width: 100%; height: 100%; border: none; display: block; }
+    .hp-frame-error {
+      position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px; padding: 32px; text-align: center;
+      background: #f8fafc; color: #0f172a; font-size: 13px;
+    }
+    .hp-frame-error p { margin: 0; max-width: 460px; color: #475569; line-height: 1.5; }
+    .hp-frame-error code { background: #e2e8f0; padding: 1px 5px; border-radius: 4px; }
+    .hp-handshake {
+      position: absolute; left: 18px; bottom: 18px; z-index: 2;
+      padding: 7px 12px; border-radius: 8px; background: rgba(15, 23, 42, 0.85); color: #e2e8f0;
+      font-size: 11px; pointer-events: none;
+    }
+
+    @media (max-width: 560px) {
+      #hp-panel { right: 12px; left: 12px; bottom: 12px; width: auto; max-height: calc(100vh - 24px); }
+      #hp-launcher { right: 12px; bottom: 12px; }
+      #hp-modal { padding: 0; }
+      .hp-modal-card { border-radius: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hp-progress span { animation: none; width: 100%; opacity: 0.6; }
+      #hp-launcher { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside>
+    <div class="sidebar-brand">
+      <div class="brand-icon">+</div>
+      <div>
+        <div class="brand-name">CarePlus</div>
+        <div class="brand-sub">Hospital HIS</div>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-item active"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item"><span class="nav-icon">🏥</span> IPD</div>
+      <div class="nav-item"><span class="nav-icon">🩺</span> OPD</div>
+      <div class="nav-item"><span class="nav-icon">🚨</span> ER</div>
+      <div class="nav-item"><span class="nav-icon">🛏</span> Bed Management</div>
+      <div class="nav-item"><span class="nav-icon">🔬</span> Lab</div>
+      <div class="nav-item"><span class="nav-icon">💊</span> Pharmacy</div>
+      <div class="nav-item"><span class="nav-icon">💰</span> Billing</div>
+      <div class="nav-item"><span class="nav-icon">📁</span> Reports</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar">N</div>
+        <div>
+          <div class="user-name">Dr. Neha Sharma</div>
+          <div class="user-role">Administrator</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main>
+    <div class="topbar">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Overview of hospital operations</div>
+      </div>
+      <div class="topbar-actions">
+        <input class="search-bar" id="his-search" name="search" type="search" placeholder="Search patients, menus, transactions…">
+        <div class="icon-action">🔔</div>
+        <div class="icon-action">❓</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Today's Admissions</div>
+          <div class="stat-value">76</div>
+          <div class="stat-delta delta-up">↑ 12% vs yesterday</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Occupancy</div>
+          <div class="stat-value">82%</div>
+          <div class="stat-delta delta-up">↑ 5% vs yesterday</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Beds</div>
+          <div class="stat-value">350</div>
+          <div class="stat-delta" style="color:#94a3b8">287 Occupied · 48 Vacant · 15 Blocked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">ER Wait (avg)</div>
+          <div class="stat-value">34m</div>
+          <div class="stat-delta delta-down">↑ 8m vs yesterday</div>
+        </div>
+      </div>
+
+      <!-- Content grid -->
+      <div class="grid-2">
+        <!-- Bed Overview -->
+        <div class="card">
+          <div class="card-title">Bed Overview by Unit</div>
+          <div class="card-row"><span class="card-label">ICU</span><span class="card-val">18 / 24 <span class="badge-count badge-red">6</span></span></div>
+          <div class="card-row"><span class="card-label">General Ward</span><span class="card-val">142 / 180 <span class="badge-count badge-green">38</span></span></div>
+          <div class="card-row"><span class="card-label">Private</span><span class="card-val">68 / 80 <span class="badge-count badge-blue">12</span></span></div>
+          <div class="card-row"><span class="card-label">Emergency</span><span class="card-val">24 / 30 <span class="badge-count badge-red">6</span></span></div>
+          <div class="card-row"><span class="card-label">Paediatric</span><span class="card-val">35 / 36 <span class="badge-count badge-red">1</span></span></div>
+        </div>
+
+        <!-- OT Overview -->
+        <div class="card">
+          <div class="card-title">OT Overview — Today</div>
+          <div class="ot-row" style="color:#94a3b8;font-size:11px;font-weight:600;padding-bottom:6px;">
+            <span>ROOM</span><span>CASE</span><span>STATUS</span><span>TIME</span>
+          </div>
+          <div class="ot-row">
+            <span class="ot-room">OT 1</span>
+            <span class="ot-case">Appendectomy — Dr. Arjun</span>
+            <span class="ot-status ot-active">In Progress</span>
+            <span style="color:#64748b">2:00 PM</span>
+          </div>
+          <div class="ot-row">
+            <span class="ot-room">OT 2</span>
+            <span class="ot-case">Knee Replacement — Dr. Meera</span>
+            <span class="ot-status ot-waiting">Prep</span>
+            <span style="color:#64748b">3:30 PM</span>
+          </div>
+          <div class="ot-row">
+            <span class="ot-room">OT 3</span>
+            <span class="ot-case">Cataract — Dr. Priya</span>
+            <span class="ot-status ot-done">Completed</span>
+            <span style="color:#64748b">12:00 PM</span>
+          </div>
+          <div class="ot-row">
+            <span class="ot-room">OT 4</span>
+            <span class="ot-case">Cholecystectomy — Dr. Rahul</span>
+            <span class="ot-status ot-waiting">Scheduled</span>
+            <span style="color:#64748b">5:00 PM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!--
+    ═══════════════════════════════════════════════════════════
+    HOSPILOT WIDGET — begin
+    Everything above this line is the untouched CarePlus HIS mock.
+    This block is self-contained: styles, markup, and logic, all
+    namespaced `hp-`. It talks only to same-origin /api/session.
+    ═══════════════════════════════════════════════════════════
+  -->
+
+  <button id="hp-launcher" type="button" aria-expanded="false" aria-controls="hp-panel">
+    <span class="hp-spark" aria-hidden="true">✦</span> Ask Hospilot
+  </button>
+
+  <section id="hp-panel" hidden aria-label="Hospilot workflow planner">
+    <header class="hp-head">
+      <div class="hp-mark" aria-hidden="true">H</div>
+      <div class="hp-head-text">
+        <div class="hp-title">Hospilot</div>
+        <div class="hp-sub">AI workflow planner</div>
+      </div>
+      <span class="hp-pill" id="hp-pill" data-tone="idle">Ready</span>
+      <button class="hp-icon-btn" id="hp-collapse" type="button" title="Collapse" aria-label="Collapse">−</button>
+    </header>
+
+    <div class="hp-body">
+      <!-- idle -->
+      <div id="hp-view-idle">
+        <label class="hp-label" for="hp-goal">What do you need planned?</label>
+        <textarea id="hp-goal" rows="3" placeholder="Check ICU bed capacity for tonight"></textarea>
+        <button class="hp-btn" id="hp-submit" type="button" style="margin-top:10px;">Plan this</button>
+        <p class="hp-hint">
+          Sent as <code id="hp-prefix-hint">[CANDIDATE-yugank]</code> + your goal.
+          The prefix is added by the backend, planning only — nothing is executed.
+        </p>
+      </div>
+
+      <!-- submitting / planning / ready / error -->
+      <div id="hp-view-status" hidden></div>
+    </div>
+  </section>
+
+  <div id="hp-modal" hidden role="dialog" aria-modal="true" aria-label="Hospilot plan">
+    <div class="hp-modal-card">
+      <div class="hp-modal-head">
+        <div>
+          <div class="hp-modal-title">Planned pipeline</div>
+          <div class="hp-modal-sub" id="hp-modal-sub"></div>
+        </div>
+        <div class="hp-modal-actions">
+          <button class="hp-small-btn" id="hp-open-tab" type="button">Open in tab</button>
+          <button class="hp-small-btn" id="hp-resend" type="button">Resend</button>
+          <button class="hp-small-btn" id="hp-modal-close" type="button">Close</button>
+        </div>
+      </div>
+      <div id="hp-frame-mount">
+        <div class="hp-frame-error" id="hp-frame-error" hidden>
+          <strong>The Hospilot app didn't load.</strong>
+          <p>
+            The embed was stopped before it reached the network — a browser
+            extension blocking third-party frames is the usual cause. Try this
+            page in a private window, allow frames from
+            <code>hospilot.carer.ai</code>, or use <b>Open in tab</b>.
+          </p>
+          <button class="hp-btn" id="hp-open-tab-fallback" type="button" style="width:auto;margin-top:8px;">Open Hospilot in a new tab</button>
+        </div>
+        <div class="hp-handshake" id="hp-handshake" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var HOSPILOT_ORIGIN   = 'https://hospilot.carer.ai';
+    var POLL_INTERVAL_MS  = 2000;
+    var POLL_TIMEOUT_MS   = 90000;
+    var HANDSHAKE_EVERY_MS = 750;
+    var HANDSHAKE_MAX     = 8;   // one on load + 7 repeats
+    var FRAME_LOAD_TIMEOUT_MS = 20000;
+
+    var state = {
+      phase: 'idle',          // idle | submitting | planning | ready | timeout | error
+      sessionId: null,
+      token: null,
+      goal: '',
+      plan: null,
+      error: '',
+      startedAt: 0
+    };
+
+    var pollTimer = null, tickTimer = null, handshakeTimer = null, handshakeSent = 0;
+    var loadTimer = null;
+
+    var el = {
+      launcher:  document.getElementById('hp-launcher'),
+      panel:     document.getElementById('hp-panel'),
+      collapse:  document.getElementById('hp-collapse'),
+      pill:      document.getElementById('hp-pill'),
+      viewIdle:  document.getElementById('hp-view-idle'),
+      viewStatus: document.getElementById('hp-view-status'),
+      goal:      document.getElementById('hp-goal'),
+      submit:    document.getElementById('hp-submit'),
+      modal:     document.getElementById('hp-modal'),
+      modalSub:  document.getElementById('hp-modal-sub'),
+      mount:     document.getElementById('hp-frame-mount'),
+      handshake: document.getElementById('hp-handshake'),
+      frameError: document.getElementById('hp-frame-error'),
+      resend:    document.getElementById('hp-resend'),
+      openTab:   document.getElementById('hp-open-tab'),
+      openTabFallback: document.getElementById('hp-open-tab-fallback'),
+      modalClose: document.getElementById('hp-modal-close')
+    };
+
+    function esc(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function elapsedSeconds() {
+      return Math.max(0, Math.round((Date.now() - state.startedAt) / 1000));
+    }
+
+    /* ── rendering ──────────────────────────────────────────────────────── */
+
+    var PILLS = {
+      idle:       ['Ready', 'idle'],
+      submitting: ['Submitting', 'busy'],
+      planning:   ['Planning', 'busy'],
+      ready:      ['Plan ready', 'good'],
+      timeout:    ['Still planning', 'warn'],
+      error:      ['Failed', 'bad']
+    };
+
+    function goalEcho() {
+      var match = /^(\[CANDIDATE-[^\]]*\]\s*)([\s\S]*)$/.exec(state.goal);
+      var prefix = match ? match[1] : '';
+      var rest   = match ? match[2] : state.goal;
+      return '<div class="hp-block">'
+        + '<div class="hp-eyebrow">Goal submitted</div>'
+        + '<div class="hp-goal-echo"><span class="hp-prefix">' + esc(prefix) + '</span>' + esc(rest) + '</div>'
+        + '</div>';
+    }
+
+    function planSummary() {
+      var plan = state.plan || {};
+      var steps = plan.steps || [];
+      var meta = [];
+      if (plan.stepCount) meta.push(plan.stepCount + (plan.stepCount === 1 ? ' agent' : ' agents'));
+      if (plan.edgeCount) meta.push(plan.edgeCount + (plan.edgeCount === 1 ? ' link' : ' links'));
+      if (plan.strategy) meta.push(esc(plan.strategy).replace(/_/g, ' '));
+
+      var html = '<div class="hp-block"><div class="hp-eyebrow">Pipeline · ' + meta.join(' · ') + '</div>';
+      if (plan.understoodGoal) {
+        html += '<div class="hp-goal-echo" style="margin-bottom:9px;">' + esc(plan.understoodGoal) + '</div>';
+      }
+      html += '<div class="hp-steps">';
+      steps.forEach(function (step) {
+        html += '<div class="hp-step">'
+          + '<span class="hp-step-n">' + esc(step.order) + '</span>'
+          + '<span><span class="hp-step-label">' + esc(step.label) + '</span>'
+          + (step.role ? '<span class="hp-step-role">' + esc(step.role) + '</span>' : '')
+          + (step.taskCount ? '<span class="hp-step-tasks">' + esc(step.taskCount) + ' task'
+              + (step.taskCount === 1 ? '' : 's') + '</span>' : '')
+          + '</span></div>';
+      });
+      html += '</div></div>';
+      return html;
+    }
+
+    function render() {
+      var pill = PILLS[state.phase] || PILLS.idle;
+      el.pill.textContent = pill[0];
+      el.pill.setAttribute('data-tone', pill[1]);
+
+      var isIdle = state.phase === 'idle';
+      el.viewIdle.hidden = !isIdle;
+      el.viewStatus.hidden = isIdle;
+      el.goal.disabled = !isIdle;
+      el.submit.disabled = !isIdle;
+      if (isIdle) {
+        el.submit.textContent = 'Plan this';
+        return;
+      }
+
+      var html = goalEcho();
+
+      if (state.phase === 'submitting') {
+        html += '<div class="hp-block"><div class="hp-progress"><span></span></div>'
+          + '<div class="hp-elapsed">Creating the session…</div></div>';
+      }
+
+      if (state.phase === 'planning') {
+        html += '<div class="hp-block"><div class="hp-progress"><span></span></div>'
+          + '<div class="hp-elapsed">Hospilot is planning — <b>' + elapsedSeconds() + 's</b> elapsed. '
+          + 'This normally takes 10–30 seconds.</div></div>';
+      }
+
+      if (state.phase === 'ready') {
+        html += planSummary()
+          + '<button class="hp-btn" id="hp-view-plan" type="button">View plan</button>'
+          + '<div class="hp-btn-row"><button class="hp-btn hp-btn-ghost" id="hp-reset" type="button">New goal</button></div>';
+      }
+
+      if (state.phase === 'timeout') {
+        html += '<div class="hp-block"><div class="hp-note" data-tone="warn">'
+          + 'No plan after ' + elapsedSeconds() + 's. The session is still live — keep polling, '
+          + 'or open the plan viewer to check on it directly.</div></div>'
+          + '<div class="hp-btn-row">'
+          + '<button class="hp-btn" id="hp-retry" type="button">Keep polling</button>'
+          + '<button class="hp-btn hp-btn-ghost" id="hp-view-plan" type="button">Open viewer</button>'
+          + '</div>';
+      }
+
+      if (state.phase === 'error') {
+        html += '<div class="hp-block"><div class="hp-note" data-tone="bad">' + esc(state.error) + '</div></div>'
+          + '<div class="hp-btn-row">'
+          + (state.sessionId ? '<button class="hp-btn" id="hp-retry" type="button">Retry polling</button>' : '')
+          + '<button class="hp-btn hp-btn-ghost" id="hp-reset" type="button">Start over</button>'
+          + '</div>';
+      }
+
+      el.viewStatus.innerHTML = html;
+
+      wire('hp-view-plan', openPlan);
+      wire('hp-reset', reset);
+      wire('hp-retry', function () {
+        // Resumes polling the SAME session. It never creates a new one.
+        state.startedAt = Date.now();
+        setPhase('planning');
+        startPolling();
+      });
+    }
+
+    function wire(id, fn) {
+      var node = document.getElementById(id);
+      if (node) node.addEventListener('click', fn);
+    }
+
+    function setPhase(phase) {
+      state.phase = phase;
+      render();
+    }
+
+    /* ── flow ───────────────────────────────────────────────────────────── */
+
+    function reset() {
+      stopPolling();
+      state.sessionId = null;
+      state.token = null;
+      state.goal = '';
+      state.plan = null;
+      state.error = '';
+      setPhase('idle');
+      el.goal.focus();
+    }
+
+    async function submitGoal() {
+      var goal = el.goal.value.trim();
+      if (goal.length < 3) {
+        el.goal.focus();
+        return;
+      }
+
+      state.goal = goal;
+      state.plan = null;
+      state.error = '';
+      state.startedAt = Date.now();
+      setPhase('submitting');
+
+      try {
+        var response = await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal: goal })
+        });
+        var data = await response.json().catch(function () { return {}; });
+
+        if (!response.ok) {
+          state.error = data.error || 'Could not create the session (HTTP ' + response.status + ').';
+          setPhase('error');
+          return;
+        }
+
+        state.sessionId = data.sessionId;
+        state.token = data.token;
+        state.goal = data.goal || goal;   // server-built goal, prefix included
+        state.startedAt = Date.now();
+        setPhase('planning');
+        startPolling();
+      } catch (err) {
+        state.error = 'Could not reach the widget backend. Check that it is running.';
+        setPhase('error');
+      }
+    }
+
+    function startPolling() {
+      stopPolling();
+      tickTimer = setInterval(function () {
+        if (state.phase === 'planning') render();
+      }, 1000);
+      poll();
+    }
+
+    function stopPolling() {
+      if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+      if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+    }
+
+    async function poll() {
+      if (!state.sessionId) return;
+
+      try {
+        var response = await fetch('/api/session?id=' + encodeURIComponent(state.sessionId));
+        var data = await response.json().catch(function () { return {}; });
+
+        if (!response.ok) {
+          state.error = data.error || 'Polling failed (HTTP ' + response.status + ').';
+          stopPolling();
+          setPhase('error');
+          return;
+        }
+
+        if (data.ready) {
+          state.plan = data;
+          stopPolling();
+          setPhase('ready');
+          return;
+        }
+
+        if (Date.now() - state.startedAt > POLL_TIMEOUT_MS) {
+          stopPolling();
+          setPhase('timeout');
+          return;
+        }
+
+        pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
+      } catch (err) {
+        // One transient failure shouldn't kill a 30-second wait; keep going
+        // until the overall timeout decides.
+        if (Date.now() - state.startedAt > POLL_TIMEOUT_MS) {
+          stopPolling();
+          setPhase('timeout');
+          return;
+        }
+        pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
+      }
+    }
+
+    /* ── the iframe handoff ─────────────────────────────────────────────── */
+
+    function postInit() {
+      var frame = document.getElementById('hospilot-frame');
+      if (!frame || !frame.contentWindow) return;
+      // Exact contract. Nothing added, nothing renamed — no retry counters,
+      // no sequence ids. Hospilot matches on this shape.
+      frame.contentWindow.postMessage(
+        { type: 'widget_init', token: state.token, sessionId: state.sessionId },
+        '*'
+      );
+      handshakeSent += 1;
+      el.frameError.hidden = true;
+      el.handshake.hidden = false;
+      el.handshake.textContent = 'Handshake sent ' + handshakeSent + '/' + HANDSHAKE_MAX;
+    }
+
+    function openInNewTab() {
+      if (!state.sessionId || !state.token) return;
+      var tab = window.open(HOSPILOT_ORIGIN, '_blank', 'noopener,noreferrer');
+      if (!tab) {
+        el.frameError.hidden = false;
+        return;
+      }
+      var sent = 0;
+      var timer = setInterval(function () {
+        if (sent >= HANDSHAKE_MAX) {
+          clearInterval(timer);
+          return;
+        }
+        tab.postMessage(
+          { type: 'widget_init', token: state.token, sessionId: state.sessionId },
+          HOSPILOT_ORIGIN
+        );
+        sent += 1;
+      }, HANDSHAKE_EVERY_MS);
+    }
+
+    function openPlan() {
+      if (!state.sessionId || !state.token) return;
+
+      teardownFrame();
+      handshakeSent = 0;
+      el.modalSub.textContent = 'Session ' + state.sessionId;
+      el.modal.hidden = false;
+
+      var frame = document.createElement('iframe');
+      frame.id = 'hospilot-frame';
+      frame.title = 'Hospilot dashboard';
+
+      // Listener attached before src is set: posting before load is the known
+      // failure here, and the message is dropped silently when it happens.
+      frame.addEventListener('load', function () {
+        if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+        el.frameError.hidden = true;
+        postInit();
+        handshakeTimer = setInterval(function () {
+          if (handshakeSent >= HANDSHAKE_MAX) {
+            clearInterval(handshakeTimer);
+            handshakeTimer = null;
+            el.handshake.textContent = 'Plan not showing? Click Resend.';
+            return;
+          }
+          // The embedded app may register its listener a beat after load, so
+          // repeat the identical message a few times, then stop.
+          postInit();
+        }, HANDSHAKE_EVERY_MS);
+      }, { once: true });
+
+      // If `load` never fires, the frame was stopped before it reached the
+      // network — nearly always a content blocker refusing the third-party
+      // embed. Say so, rather than leaving an unexplained blank panel.
+      loadTimer = setTimeout(function () {
+        loadTimer = null;
+        if (handshakeSent > 0) return;
+        el.frameError.hidden = false;
+      }, FRAME_LOAD_TIMEOUT_MS);
+
+      frame.src = HOSPILOT_ORIGIN;
+      el.mount.appendChild(frame);
+    }
+
+    function teardownFrame() {
+      if (handshakeTimer) { clearInterval(handshakeTimer); handshakeTimer = null; }
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+      el.frameError.hidden = true;
+      var frame = document.getElementById('hospilot-frame');
+      if (frame) frame.remove();
+      el.handshake.hidden = true;
+      el.handshake.textContent = '';
+    }
+
+    function closePlan() {
+      teardownFrame();
+      el.modal.hidden = true;
+    }
+
+    /* ── wiring ─────────────────────────────────────────────────────────── */
+
+    function openPanel() {
+      el.panel.hidden = false;
+      el.launcher.hidden = true;
+      el.launcher.setAttribute('aria-expanded', 'true');
+      if (state.phase === 'idle') el.goal.focus();
+    }
+
+    function collapsePanel() {
+      el.panel.hidden = true;
+      el.launcher.hidden = false;
+      el.launcher.setAttribute('aria-expanded', 'false');
+    }
+
+    el.launcher.addEventListener('click', openPanel);
+    el.collapse.addEventListener('click', collapsePanel);
+    el.submit.addEventListener('click', submitGoal);
+    el.resend.addEventListener('click', postInit);
+    el.openTab.addEventListener('click', openInNewTab);
+    el.openTabFallback.addEventListener('click', openInNewTab);
+    el.modalClose.addEventListener('click', closePlan);
+
+    el.goal.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) submitGoal();
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !el.modal.hidden) closePlan();
+    });
+
+    render();
+  })();
+  </script>
+
+  <!-- ══════════════ HOSPILOT WIDGET — end ══════════════ -->
+
+</body>
+</html>
